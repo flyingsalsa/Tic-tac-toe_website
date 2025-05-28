@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmic Tic Tac Toe | Multiplayer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-pulse-slow {
+            animation: pulse 3s infinite;
+        }
+        .cell {
+            transition: all 0.3s ease;
+        }
+        .cell:hover:not(.occupied) {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+        }
+        .gradient-text {
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+        .neon-border {
+            box-shadow: 0 0 10px #4f46e5, 0 0 20px #4f46e5, inset 0 0 10px #4f46e5;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen font-sans">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-6xl font-bold mb-2 gradient-text bg-gradient-to-r from-purple-500 via-pink-500 to-indigo-500">
+                Cosmic Tic Tac Toe
+            </h1>
+            <p class="text-lg text-gray-300">A stylish multiplayer experience</p>
+        </header>
+
+        <!-- Game Area -->
+        <div class="flex flex-col lg:flex-row gap-8 items-center justify-center">
+            <!-- Player Info -->
+            <div class="w-full lg:w-1/4 space-y-6">
+                <div class="bg-gray-800 rounded-xl p-6 shadow-lg neon-border">
+                    <h2 class="text-xl font-semibold mb-4 flex items-center">
+                        <i class="fas fa-user-astronaut mr-2 text-indigo-400"></i> Player Info
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Your Symbol</label>
+                            <div class="flex items-center">
+                                <div id="playerSymbol" class="w-10 h-10 flex items-center justify-center text-2xl font-bold rounded-full bg-indigo-900"></div>
+                                <span id="playerTurn" class="ml-2 text-sm text-gray-300"></span>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Game Status</label>
+                            <div id="gameStatus" class="text-lg font-medium text-indigo-300">Waiting to start...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Session Info -->
+                <div class="bg-gray-800 rounded-xl p-6 shadow-lg neon-border">
+                    <h2 class="text-xl font-semibold mb-4 flex items-center">
+                        <i class="fas fa-share-alt mr-2 text-pink-400"></i> Multiplayer
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Session ID</label>
+                            <div class="flex">
+                                <input id="sessionId" type="text" readonly class="flex-1 bg-gray-700 border border-gray-600 rounded-l-lg px-4 py-2 text-sm focus:outline-none">
+                                <button id="copySessionBtn" class="bg-indigo-600 hover:bg-indigo-700 px-3 rounded-r-lg transition">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Join Session</label>
+                            <div class="flex">
+                                <input id="joinSessionInput" type="text" placeholder="Enter session ID" class="flex-1 bg-gray-700 border border-gray-600 rounded-l-lg px-4 py-2 text-sm focus:outline-none">
+                                <button id="joinSessionBtn" class="bg-pink-600 hover:bg-pink-700 px-4 rounded-r-lg transition">
+                                    Join
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game Board -->
+            <div class="w-full lg:w-2/4">
+                <div class="bg-gray-800 rounded-xl p-6 shadow-xl neon-border">
+                    <div class="grid grid-cols-3 gap-4 aspect-square">
+                        <!-- Game cells will be generated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game Controls -->
+            <div class="w-full lg:w-1/4 space-y-6">
+                <div class="bg-gray-800 rounded-xl p-6 shadow-lg neon-border">
+                    <h2 class="text-xl font-semibold mb-4 flex items-center">
+                        <i class="fas fa-gamepad mr-2 text-purple-400"></i> Controls
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <button id="newGameBtn" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-medium py-3 px-4 rounded-lg transition transform hover:scale-105">
+                            <i class="fas fa-plus mr-2"></i> New Game
+                        </button>
+                        
+                        <button id="resetGameBtn" class="w-full bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 px-4 rounded-lg transition transform hover:scale-105">
+                            <i class="fas fa-redo mr-2"></i> Reset Game
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Game History -->
+                <div class="bg-gray-800 rounded-xl p-6 shadow-lg neon-border">
+                    <h2 class="text-xl font-semibold mb-4 flex items-center">
+                        <i class="fas fa-history mr-2 text-blue-400"></i> Game History
+                    </h2>
+                    
+                    <div id="gameHistory" class="space-y-2 max-h-40 overflow-y-auto">
+                        <div class="text-sm text-gray-400">No games played yet</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-16 text-center text-gray-500 text-sm">
+            <p>Made with <i class="fas fa-heart text-pink-500"></i> for multiplayer fun</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Game state
+            const gameState = {
+                board: Array(9).fill(null),
+                currentPlayer: 'X',
+                gameActive: false,
+                playerSymbol: null,
+                sessionId: generateSessionId(),
+                opponentConnected: false,
+                gameHistory: []
+            };
+
+            // DOM elements
+            const boardElement = document.querySelector('.grid');
+            const playerSymbolElement = document.getElementById('playerSymbol');
+            const playerTurnElement = document.getElementById('playerTurn');
+            const gameStatusElement = document.getElementById('gameStatus');
+            const sessionIdElement = document.getElementById('sessionId');
+            const copySessionBtn = document.getElementById('copySessionBtn');
+            const joinSessionInput = document.getElementById('joinSessionInput');
+            const joinSessionBtn = document.getElementById('joinSessionBtn');
+            const newGameBtn = document.getElementById('newGameBtn');
+            const resetGameBtn = document.getElementById('resetGameBtn');
+            const gameHistoryElement = document.getElementById('gameHistory');
+
+            // Initialize the game
+            initGame();
+
+            // Event listeners
+            copySessionBtn.addEventListener('click', copySessionId);
+            joinSessionBtn.addEventListener('click', joinSession);
+            newGameBtn.addEventListener('click', startNewGame);
+            resetGameBtn.addEventListener('click', resetGame);
+
+            // Initialize the game board
+            function initGame() {
+                // Clear the board
+                boardElement.innerHTML = '';
+                
+                // Create cells
+                for (let i = 0; i < 9; i++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell', 'bg-gray-700', 'rounded-lg', 'flex', 'items-center', 'justify-center', 'cursor-pointer', 'text-4xl', 'font-bold');
+                    cell.dataset.index = i;
+                    cell.addEventListener('click', () => handleCellClick(i));
+                    boardElement.appendChild(cell);
+                }
+
+                // Update UI
+                sessionIdElement.value = gameState.sessionId;
+                updateGameStatus();
+            }
+
+            // Handle cell click
+            function handleCellClick(index) {
+                if (!gameState.gameActive || gameState.board[index] !== null || 
+                    (gameState.playerSymbol && gameState.currentPlayer !== gameState.playerSymbol)) {
+                    return;
+                }
+
+                // Update board
+                gameState.board[index] = gameState.currentPlayer;
+                updateBoard();
+
+                // Check for win or draw
+                if (checkWin()) {
+                    gameState.gameActive = false;
+                    const winner = gameState.currentPlayer;
+                    gameState.gameHistory.unshift(`${winner} won the game!`);
+                    updateGameHistory();
+                    gameStatusElement.textContent = `Player ${winner} wins!`;
+                    gameStatusElement.classList.add('text-green-400');
+                    gameStatusElement.classList.remove('text-indigo-300');
+                    return;
+                }
+
+                if (checkDraw()) {
+                    gameState.gameActive = false;
+                    gameState.gameHistory.unshift("Game ended in a draw!");
+                    updateGameHistory();
+                    gameStatusElement.textContent = "Game ended in a draw!";
+                    gameStatusElement.classList.add('text-yellow-400');
+                    gameStatusElement.classList.remove('text-indigo-300');
+                    return;
+                }
+
+                // Switch player
+                gameState.currentPlayer = gameState.currentPlayer === 'X' ? 'O' : 'X';
+                updateGameStatus();
+
+                // In a real app, here you would send the move to the opponent
+                // For this demo, we'll simulate opponent moves after a delay
+                if (gameState.opponentConnected && gameState.currentPlayer !== gameState.playerSymbol) {
+                    setTimeout(makeOpponentMove, 1000);
+                }
+            }
+
+            // Make a random opponent move (simulation)
+            function makeOpponentMove() {
+                if (!gameState.gameActive) return;
+
+                const emptyCells = gameState.board
+                    .map((cell, index) => cell === null ? index : null)
+                    .filter(val => val !== null);
+
+                if (emptyCells.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * emptyCells.length);
+                    const cellIndex = emptyCells[randomIndex];
+                    
+                    gameState.board[cellIndex] = gameState.currentPlayer;
+                    updateBoard();
+
+                    if (checkWin()) {
+                        gameState.gameActive = false;
+                        const winner = gameState.currentPlayer;
+                        gameState.gameHistory.unshift(`${winner} won the game!`);
+                        updateGameHistory();
+                        gameStatusElement.textContent = `Player ${winner} wins!`;
+                        gameStatusElement.classList.add('text-green-400');
+                        gameStatusElement.classList.remove('text-indigo-300');
+                        return;
+                    }
+
+                    if (checkDraw()) {
+                        gameState.gameActive = false;
+                        gameState.gameHistory.unshift("Game ended in a draw!");
+                        updateGameHistory();
+                        gameStatusElement.textContent = "Game ended in a draw!";
+                        gameStatusElement.classList.add('text-yellow-400');
+                        gameStatusElement.classList.remove('text-indigo-300');
+                        return;
+                    }
+
+                    gameState.currentPlayer = gameState.currentPlayer === 'X' ? 'O' : 'X';
+                    updateGameStatus();
+                }
+            }
+
+            // Update the board UI
+            function updateBoard() {
+                const cells = document.querySelectorAll('.cell');
+                gameState.board.forEach((cell, index) => {
+                    if (cell) {
+                        cells[index].textContent = cell;
+                        cells[index].classList.add('occupied');
+                        
+                        if (cell === 'X') {
+                            cells[index].classList.add('text-pink-500');
+                        } else {
+                            cells[index].classList.add('text-indigo-400');
+                        }
+                    }
+                });
+            }
+
+            // Check for win condition
+            function checkWin() {
+                const winPatterns = [
+                    [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
+                    [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
+                    [0, 4, 8], [2, 4, 6]             // diagonals
+                ];
+
+                return winPatterns.some(pattern => {
+                    const [a, b, c] = pattern;
+                    return gameState.board[a] && 
+                           gameState.board[a] === gameState.board[b] && 
+                           gameState.board[a] === gameState.board[c];
+                });
+            }
+
+            // Check for draw
+            function checkDraw() {
+                return !gameState.board.includes(null) && !checkWin();
+            }
+
+            // Update game status UI
+            function updateGameStatus() {
+                if (gameState.gameActive) {
+                    if (gameState.playerSymbol) {
+                        playerSymbolElement.textContent = gameState.playerSymbol;
+                        if (gameState.currentPlayer === gameState.playerSymbol) {
+                            playerTurnElement.textContent = "(Your turn)";
+                            playerTurnElement.classList.add('text-green-400');
+                            playerTurnElement.classList.remove('text-gray-300');
+                        } else {
+                            playerTurnElement.textContent = "(Opponent's turn)";
+                            playerTurnElement.classList.add('text-yellow-400');
+                            playerTurnElement.classList.remove('text-gray-300');
+                        }
+                    } else {
+                        playerSymbolElement.textContent = '?';
+                        playerTurnElement.textContent = `Player ${gameState.currentPlayer}'s turn`;
+                        playerTurnElement.classList.add('text-indigo-300');
+                    }
+                    
+                    gameStatusElement.textContent = "Game in progress...";
+                    gameStatusElement.classList.add('text-indigo-300');
+                    gameStatusElement.classList.remove('text-green-400', 'text-yellow-400');
+                }
+            }
+
+            // Start a new game
+            function startNewGame() {
+                // Reset board
+                gameState.board = Array(9).fill(null);
+                gameState.currentPlayer = 'X';
+                gameState.gameActive = true;
+                
+                // Clear board UI
+                const cells = document.querySelectorAll('.cell');
+                cells.forEach(cell => {
+                    cell.textContent = '';
+                    cell.classList.remove('occupied', 'text-pink-500', 'text-indigo-400');
+                });
+                
+                // Update UI
+                updateGameStatus();
+                
+                // In a real app, you would notify the opponent that a new game has started
+            }
+
+            // Reset the game completely
+            function resetGame() {
+                gameState.board = Array(9).fill(null);
+                gameState.currentPlayer = 'X';
+                gameState.gameActive = false;
+                gameState.playerSymbol = null;
+                gameState.opponentConnected = false;
+                
+                // Clear board UI
+                const cells = document.querySelectorAll('.cell');
+                cells.forEach(cell => {
+                    cell.textContent = '';
+                    cell.classList.remove('occupied', 'text-pink-500', 'text-indigo-400');
+                });
+                
+                // Update UI
+                playerSymbolElement.textContent = '';
+                playerTurnElement.textContent = '';
+                gameStatusElement.textContent = "Waiting to start...";
+                gameStatusElement.classList.add('text-indigo-300');
+                gameStatusElement.classList.remove('text-green-400', 'text-yellow-400');
+            }
+
+            // Generate a random session ID
+            function generateSessionId() {
+                return 'xxxx-xxxx-xxxx'.replace(/[x]/g, () => {
+                    return Math.floor(Math.random() * 16).toString(16);
+                });
+            }
+
+            // Copy session ID to clipboard
+            function copySessionId() {
+                sessionIdElement.select();
+                document.execCommand('copy');
+                
+                // Show feedback
+                const originalText = copySessionBtn.innerHTML;
+                copySessionBtn.innerHTML = '<i class="fas fa-check"></i>';
+                setTimeout(() => {
+                    copySessionBtn.innerHTML = originalText;
+                }, 2000);
+            }
+
+            // Join a session
+            function joinSession() {
+                const sessionId = joinSessionInput.value.trim();
+                if (!sessionId) return;
+                
+                // In a real app, you would validate the session ID with a server
+                // For this demo, we'll just simulate joining
+                gameState.sessionId = sessionId;
+                sessionIdElement.value = sessionId;
+                gameState.playerSymbol = 'O'; // Second player is O
+                gameState.opponentConnected = true;
+                
+                // Update UI
+                gameStatusElement.textContent = "Connected to game!";
+                setTimeout(() => {
+                    gameStatusElement.textContent = "Waiting for host to start...";
+                }, 2000);
+                
+                // Show feedback
+                const originalText = joinSessionBtn.textContent;
+                joinSessionBtn.innerHTML = '<i class="fas fa-check"></i>';
+                setTimeout(() => {
+                    joinSessionBtn.textContent = originalText;
+                }, 2000);
+            }
+
+            // Update game history
+            function updateGameHistory() {
+                gameHistoryElement.innerHTML = '';
+                
+                if (gameState.gameHistory.length === 0) {
+                    gameHistoryElement.innerHTML = '<div class="text-sm text-gray-400">No games played yet</div>';
+                    return;
+                }
+                
+                gameState.gameHistory.forEach((item, index) => {
+                    const historyItem = document.createElement('div');
+                    historyItem.classList.add('text-sm', 'py-1', 'px-2', 'rounded', 'bg-gray-700');
+                    if (item.includes('won')) {
+                        historyItem.classList.add('text-green-400');
+                    } else if (item.includes('draw')) {
+                        historyItem.classList.add('text-yellow-400');
+                    } else {
+                        historyItem.classList.add('text-gray-300');
+                    }
+                    historyItem.textContent = item;
+                    gameHistoryElement.appendChild(historyItem);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
